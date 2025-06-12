@@ -17,5 +17,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/resume', '/resume/:path*'],
+  matcher: ['/resume/:path*'],
 }
