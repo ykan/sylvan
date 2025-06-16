@@ -20,9 +20,12 @@ export function createButton(props: ButtonProps) {
     height,
   } = props
   const view = new Sprite()
-  const textView = new Text(text, {
-    fontSize,
-    fill: color,
+  const textView = new Text({
+    text,
+    style: {
+      fontSize,
+      fill: color,
+    },
   })
 
   const bgWidth = width || textView.width + 40

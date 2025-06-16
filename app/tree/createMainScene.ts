@@ -32,7 +32,7 @@ export function createMainScene(app: Application) {
   map.y = mapY
 
   const scoreView = new Text('Score:0', {
-    fontSize: 60 * ratio,
+    fontSize: 40 * ratio,
     fill: 0x333333,
   })
   let totalScore = 0
@@ -193,11 +193,14 @@ export function createMainScene(app: Application) {
     modalBg.drawRect(0, 0, app.canvas.width, app.canvas.height) // v8: app.view -> app.canvas
     modal.addChild(modalBg)
 
-    const resultTitle = new Text('Game Over!', {
-      fontSize: 100 * ratio,
-      fill: 0xf1d619,
-      fontStyle: 'italic',
-      fontWeight: 'bold',
+    const resultTitle = new Text({
+      text: 'Game Over',
+      style: {
+        fontSize: 100 * ratio,
+        fill: 0xf1d619,
+        fontStyle: 'italic',
+        fontWeight: 'bold',
+      },
     })
 
     resultTitle.y = app.canvas.height / 2.5 // v8: app.view -> app.canvas
@@ -207,7 +210,7 @@ export function createMainScene(app: Application) {
 
     const restartBtn = createButton({
       text: 'Restart',
-      fontSize: 60 * ratio,
+      fontSize: 40 * ratio,
       width: 300 * ratio,
       height: 100 * ratio,
       borderRadius: 20 * ratio,
