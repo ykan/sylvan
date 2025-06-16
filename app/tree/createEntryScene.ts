@@ -1,14 +1,8 @@
 import { ease } from 'pixi-ease'
-import {
-  Application,
-  Text,
-  Assets,
-  TextStyle,
-  FillGradient,
-  Color,
-} from 'pixi.js'
+import { Application, Text, Assets, TextStyle } from 'pixi.js'
 
 export function createEntryScene(app: Application) {
+  const ratio = window.devicePixelRatio || 1
   // v8: 用 Assets.load 批量加载资源
   const loadAssets = async () => {
     const assetList = [
@@ -28,23 +22,11 @@ export function createEntryScene(app: Application) {
     // 加载所有资源
     await Assets.load(assetList.map((a) => a.alias))
   }
-  const fill = new FillGradient(0, 0, 0, 10)
-
-  const colors = [0xffffff, 0x00ff99].map((color) =>
-    Color.shared.setValue(color).toNumber()
-  )
-
-  colors.forEach((number, index) => {
-    const ratio = index / colors.length
-
-    fill.addColorStop(ratio, number)
-  })
   const style = new TextStyle({
     fontFamily: 'Arial',
-    fontSize: 60,
-    fontStyle: 'italic',
+    fontSize: 40 * ratio,
     fontWeight: 'bold',
-    fill: { fill },
+    fill: '#ffffff',
     stroke: { color: '#4a1850', width: 5, join: 'round' },
     dropShadow: {
       color: '#000000',
@@ -52,8 +34,6 @@ export function createEntryScene(app: Application) {
       angle: Math.PI / 6,
       distance: 6,
     },
-    wordWrap: true,
-    wordWrapWidth: 440,
   })
 
   const startButton = new Text({
@@ -71,7 +51,7 @@ export function createEntryScene(app: Application) {
       startButton.cursor = 'pointer'
       ease.add(
         startButton,
-        { alpha: 0.5, y: startButton.y - 10, x: startButton.x + 5 },
+        { alpha: 0.5, y: startButton.y + 5, x: startButton.x + 2 },
         { repeat: true, duration: 1500, ease: 'easeInOutQuad', reverse: true }
       )
       const next = () => {

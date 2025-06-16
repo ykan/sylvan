@@ -1,18 +1,10 @@
 import { ease } from 'pixi-ease'
-import {
-  Application,
-  Graphics,
-  Point,
-  Sprite,
-  Text,
-  TilingSprite,
-  Assets,
-} from 'pixi.js'
+import { Application, Point, Sprite, Text, TilingSprite, Assets } from 'pixi.js'
 
-import { createButton } from './createButton'
 import { createGrid } from './createGrid'
 import { createTreeMap } from './createTreeMap'
 import { waitTime } from './utils'
+import { gameOver } from './gameOver'
 
 import type { TreeType, Tree } from './types'
 type GameStatus = 'play' | 'moving'
@@ -21,7 +13,7 @@ export function createMainScene(app: Application) {
   // 一些常量
   const ratio = window.devicePixelRatio || 1
   const mapX = 20 * ratio
-  const mapY = 300 * ratio
+  const mapY = 100 * ratio
   const mapSize = app.canvas.width - mapX * 2 // v8: app.view -> app.canvas
   const rowNum = 8
   const blockSize = (mapSize / rowNum) >> 0
@@ -31,13 +23,31 @@ export function createMainScene(app: Application) {
   map.x = mapX
   map.y = mapY
 
-  const scoreView = new Text('Score:0', {
-    fontSize: 40 * ratio,
-    fill: 0x333333,
-  })
+  let scoreView: Text
+
+  function createScoreView() {
+    const scoreLogo = Sprite.from('1-green')
+    scoreLogo.x = mapX
+    scoreLogo.y = mapY - 50 * ratio
+    app.stage.addChild(scoreLogo)
+    scoreView = new Text({
+      text: '0',
+      style: {
+        fontSize: 40 * ratio,
+        fill: 0x333333,
+        fontWeight: 'bold',
+      },
+    })
+    scoreView.x = mapX + scoreLogo.width + 10 * ratio
+    scoreView.y = mapY - 50 * ratio
+    app.stage.addChild(scoreView)
+  }
   let totalScore = 0
-  scoreView.x = mapX
-  scoreView.y = mapY - 120 * ratio
+  function updateScore() {
+    if (scoreView) {
+      scoreView.text = `${totalScore * 10}`
+    }
+  }
 
   // 全局网格
   let grid = createGrid(rowNum, rowNum)
@@ -106,7 +116,7 @@ export function createMainScene(app: Application) {
       },
     }
     treeMap.push(instance)
-    view.on('pointertap', () => {
+    view.on('pointerdown', () => {
       if (gameStatus !== 'play') {
         return
       }
@@ -183,57 +193,7 @@ export function createMainScene(app: Application) {
         }
       }
     }
-    scoreView.text = `Score:${totalScore * 10}`
-  }
-
-  function createModal() {
-    const modal = new Sprite()
-    const modalBg = new Graphics()
-    modalBg.beginFill(0x000000, 0.7)
-    modalBg.drawRect(0, 0, app.canvas.width, app.canvas.height) // v8: app.view -> app.canvas
-    modal.addChild(modalBg)
-
-    const resultTitle = new Text({
-      text: 'Game Over',
-      style: {
-        fontSize: 100 * ratio,
-        fill: 0xf1d619,
-        fontStyle: 'italic',
-        fontWeight: 'bold',
-      },
-    })
-
-    resultTitle.y = app.canvas.height / 2.5 // v8: app.view -> app.canvas
-    resultTitle.x = (app.canvas.width - resultTitle.width) / 2
-
-    modal.addChild(resultTitle)
-
-    const restartBtn = createButton({
-      text: 'Restart',
-      fontSize: 40 * ratio,
-      width: 300 * ratio,
-      height: 100 * ratio,
-      borderRadius: 20 * ratio,
-    })
-
-    restartBtn.view.x = (app.canvas.width - 300 * ratio) / 2
-    restartBtn.view.y = resultTitle.y + 200 * ratio
-
-    modal.addChild(restartBtn.view)
-    return {
-      modal,
-      restartBtn,
-    }
-  }
-  const modal = createModal()
-
-  async function gameOver() {
-    app.stage.addChild(modal.modal)
-    modal.restartBtn.view.on('pointerdown', () => {
-      modal.restartBtn.view.removeAllListeners()
-      app.stage.removeChild(modal.modal)
-      restart()
-    })
+    updateScore()
   }
   async function restart() {
     const trees = treeMap.trees
@@ -243,7 +203,7 @@ export function createMainScene(app: Application) {
     grid = createGrid(rowNum, rowNum)
     gameStatus = 'play'
     totalScore = 0
-    scoreView.text = `Score:${totalScore * 10}`
+    updateScore()
     randomAddTrees(1, 4)
   }
 
@@ -295,35 +255,25 @@ export function createMainScene(app: Application) {
     }
     const walkableNodes = grid.getWalkableNodes()
     if (walkableNodes.length === 0) {
-      gameOver()
+      gameOver(app, restart)
       return
     }
     gameStatus = 'play'
   }
 
   function startGame() {
-    // v8: 用 Assets.get 获取 map 纹理
-    const mapBgTexture = Assets.get('map')
-    const mapBg = new TilingSprite(mapBgTexture, rowNum * 52, rowNum * 52)
-    const btn = createButton({
-      text: 'Restart',
-      fontSize: 40 * ratio,
-      width: 300 * ratio,
-      height: 100 * ratio,
-      borderRadius: 20 * ratio,
+    const mapBg = new TilingSprite({
+      texture: Assets.get('map'),
+      width: rowNum * 52,
+      height: rowNum * 52,
     })
-    btn.view.x = app.canvas.width / 2 - 150 * ratio
-    btn.view.y = mapY + mapSize + 20 * ratio
 
     mapBg.scale.set(blockSize / 52, blockSize / 52)
     mapBg.interactive = true
     map.addChild(mapBg)
 
-    app.stage.addChild(btn.view)
     app.stage.addChild(map)
-    app.stage.addChild(scoreView)
-
-    btn.view.on('pointerdown', restart)
+    createScoreView()
 
     mapBg.on('pointerdown', (e) => {
       const mousePointer = e.data.global as Point
