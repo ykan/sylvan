@@ -139,7 +139,7 @@ export function createGrid(colNum: number, rowNum: number) {
       // while the open list is not empty
       while (!openList.empty()) {
         // pop the position of node which has the minimum `f` value.
-        const node = openList.pop()
+        const node = openList.pop()!
         node.closed = true
 
         // if reached the end position, construct the path and return it
