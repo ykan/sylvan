@@ -12,17 +12,16 @@ export const metadata: Metadata = {
 }
 
 async function getResumeData(locale: string): Promise<ResumeData | undefined> {
-  if (process.env.NODE_ENV === 'development') {
-    const devJson = await import('./tmp_resume.json')
-    const devData =
-      locale === 'zh'
-        ? devJson.default['resumeZH']
-        : devJson.default['resumeEN']
-    return devData as ResumeData
-  } else {
-    // 生产环境用 edge-config
-    return get(locale === 'zh' ? 'resumeZH' : 'resumeEN')
-  }
+  // if (process.env.NODE_ENV === 'development') {
+  //   const devJson = await import('./tmp_resume.json')
+  //   const devData =
+  //     locale === 'zh'
+  //       ? devJson.default['resumeZH']
+  //       : devJson.default['resumeEN']
+  //   return devData as ResumeData
+  // }
+  // 生产环境用 edge-config
+  return get(locale === 'zh' ? 'resumeZH' : 'resumeEN')
 }
 const supportLocale = ['zh', 'en']
 export default async function Page({
