@@ -20,7 +20,7 @@ export async function generateJWT(payload) {
   console.log('生成的JWT令牌:')
   console.log(token)
   console.log('\n访问链接:')
-  console.log(`http://localhost:3000/resume/en?jwt=${token}`)
+  console.log(`http://localhost:3000/resume/zh?jwt=${token}`)
 }
 
 // 生成令牌
