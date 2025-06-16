@@ -229,7 +229,7 @@ export function createMainScene(app: Application) {
 
   async function gameOver() {
     app.stage.addChild(modal.modal)
-    modal.restartBtn.view.on('pointertap', () => {
+    modal.restartBtn.view.on('pointerdown', () => {
       modal.restartBtn.view.removeAllListeners()
       app.stage.removeChild(modal.modal)
       restart()
@@ -307,7 +307,7 @@ export function createMainScene(app: Application) {
     const mapBg = new TilingSprite(mapBgTexture, rowNum * 52, rowNum * 52)
     const btn = createButton({
       text: 'Restart',
-      fontSize: 60 * ratio,
+      fontSize: 40 * ratio,
       width: 300 * ratio,
       height: 100 * ratio,
       borderRadius: 20 * ratio,
@@ -323,9 +323,9 @@ export function createMainScene(app: Application) {
     app.stage.addChild(map)
     app.stage.addChild(scoreView)
 
-    btn.view.on('pointertap', restart)
+    btn.view.on('pointerdown', restart)
 
-    mapBg.on('pointertap', (e) => {
+    mapBg.on('pointerdown', (e) => {
       const mousePointer = e.data.global as Point
       const endX = ((mousePointer.x - mapX) / blockSize) >> 0
       const endY = ((mousePointer.y - mapY) / blockSize) >> 0
