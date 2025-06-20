@@ -4,6 +4,7 @@ export type ResumeData = {
   email: string
   location: string
   github: string
+  githubUrl: string
   introduction: string
 
   title: {
@@ -11,6 +12,7 @@ export type ResumeData = {
     introduction: string
     brief: string
     experience: string
+    creations: string
   }
   experiences: Array<{
     title: string

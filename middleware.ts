@@ -1,13 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { jwtVerify } from 'jose'
+import dayjs from 'dayjs'
+import md5 from 'blueimp-md5'
 
-const secret = new TextEncoder().encode(process.env.RESUME_KEY)
+function validExpireTime(exp: string, sign: string): boolean {
+  const secret = process.env.RESUME_KEY
+  const signature = md5(`${exp}${secret}`)
+  if (sign !== signature) {
+    throw new Error('Invalid signature')
+  }
+  const expireNum = Number(exp)
+  const expireTime = dayjs.unix(expireNum)
+  if (!expireTime.isValid()) {
+    throw new Error('Invalid expire time')
+  }
+  const currentTime = dayjs().unix()
+  return expireNum > currentTime
+}
+
 export async function middleware(request: NextRequest) {
-  const token = request.nextUrl.searchParams.get('jwt') || ''
+  const exp = request.nextUrl.searchParams.get('exp') || ''
+  const sign = request.nextUrl.searchParams.get('sign') || ''
   let isVerified = false
   try {
-    const { payload } = await jwtVerify(token, secret)
-    isVerified = Boolean(payload)
+    isVerified = validExpireTime(exp, sign)
   } catch (error) {
     console.log(error)
   }
