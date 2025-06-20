@@ -9,7 +9,6 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "resume": "node scripts/generate-resume.mjs",
     "prepare": "husky"
   },
   "dependencies": {
@@ -17,10 +16,8 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-switch": "^1.2.5",
     "@vercel/edge-config": "^1.4.0",
-    "blueimp-md5": "^2.19.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "dayjs": "^1.11.13",
     "heap": "^0.2.7",
     "lucide-react": "^0.514.0",
     "next": "15.3.3",
@@ -37,7 +34,6 @@
     "@eslint/eslintrc": "^3",
     "@next/eslint-plugin-next": "^15.3.3",
     "@tailwindcss/postcss": "^4",
-    "@types/blueimp-md5": "^2.18.2",
     "@types/heap": "^0.2.34",
     "@types/node": "^20",
     "@types/react": "^19",
