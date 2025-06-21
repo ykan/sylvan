@@ -1,3 +1,4 @@
+'use client'
 import Heap from 'heap'
 
 export type Node = {
@@ -19,11 +20,64 @@ export type Node = {
    * F = G + H
    */
   f: number
+  onChange: (fn: () => void) => void
   parent?: Node
 }
 
 function manhattan(dx: number, dy: number) {
   return dx + dy
+}
+
+export function createNode(x: number, y: number): Node {
+  let _change = () => {}
+  let _f = 0,
+    _g = 0,
+    _h = 0
+  let _walkable = true,
+    _selected = false
+  return {
+    x,
+    y,
+    onChange: (fn) => {
+      _change = fn
+    },
+    set f(v: number) {
+      _f = v
+      _change()
+    },
+    get f() {
+      return _f
+    },
+    set g(v: number) {
+      _g = v
+      _change()
+    },
+    get g() {
+      return _g
+    },
+    set h(v: number) {
+      _h = v
+      _change()
+    },
+    get h() {
+      return _h
+    },
+
+    set walkable(v: boolean) {
+      _walkable = v
+      _change()
+    },
+    get walkable() {
+      return _walkable
+    },
+    set selected(v: boolean) {
+      _selected = v
+      _change()
+    },
+    get selected() {
+      return _selected
+    },
+  }
 }
 
 export function createGrid(colNum: number, rowNum: number) {
@@ -34,14 +88,7 @@ export function createGrid(colNum: number, rowNum: number) {
         nodes[i] = []
       }
       for (let j = 0; j < rowNum; j++) {
-        const node: Node = {
-          x: i,
-          y: j,
-          f: 0,
-          g: 0,
-          h: 0,
-          walkable: true,
-        }
+        const node = createNode(i, j)
         nodes[i][j] = node
       }
     }
@@ -100,18 +147,6 @@ export type Grid = ReturnType<typeof createGrid>
 interface AStarFinderOptions {
   weight?: number
   heuristic?: (dx: number, dy: number) => number
-}
-
-export function createListener() {
-  const fns: Array<() => void> = []
-  return {
-    onChange(fn: () => void) {
-      fns.push(fn)
-    },
-    emit() {
-      fns.forEach((fn) => fn())
-    },
-  }
 }
 
 export function createAStarFinder(opts: AStarFinderOptions = {}) {
@@ -180,7 +215,7 @@ export function createAStarFinder(opts: AStarFinderOptions = {}) {
               openList.push(neighbor)
               neighbor.opened = true
             } else {
-              console.log('update heap')
+              // console.log('update heap')
               // the neighbor can be reached with smaller cost.
               // Since its f value has been updated, we have to
               // update its position in the open list

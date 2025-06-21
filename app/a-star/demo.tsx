@@ -1,15 +1,8 @@
 'use client'
-
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 
-import {
-  createAStarFinder,
-  createGrid,
-  createListener,
-  Grid,
-  Node,
-} from './createAStarFinder'
+import { createAStarFinder, createGrid, Grid, Node } from './createAStarFinder'
 import { cn } from '@/lib/utils'
 
 type BlockType = 'wall' | 'start' | 'end' | 'default'
@@ -17,7 +10,6 @@ type BlockType = 'wall' | 'start' | 'end' | 'default'
 type IGridContext = {
   startNode: Node
   endNode: Node
-  listener: ReturnType<typeof createListener>
   finder: ReturnType<typeof createAStarFinder>
   grid: Grid
 }
@@ -26,7 +18,7 @@ const GridContext = React.createContext<IGridContext>({} as IGridContext)
 
 function Block(props: { node: Node }) {
   const { node } = props
-  const { listener, startNode, endNode } = React.useContext(GridContext)
+  const { startNode, endNode } = React.useContext(GridContext)
   const [, setState] = React.useState(0)
   const forceUpdate = React.useCallback(() => setState((n) => n + 1), [])
   const lastF = React.useRef(node.f)
@@ -55,7 +47,7 @@ function Block(props: { node: Node }) {
     result = 'end'
   }
   React.useEffect(() => {
-    listener.onChange(() => {
+    node?.onChange(() => {
       if (lastF.current !== node.f || node.selected) {
         lastF.current = node.f
         forceUpdate()
@@ -99,19 +91,60 @@ function GridView() {
   )
 }
 
+type ContextValueParams = {
+  start: [number, number]
+  end: [number, number]
+  walls: Array<[number, number]>
+}
+
+function createContextValue(params: ContextValueParams): IGridContext {
+  const { start, end, walls } = params
+  const [startX, startY] = start
+  const [endX, endY] = end
+  const grid = createGrid(10, 10)
+  const startNode = grid.getNodeAt(startX, startY)!
+  const endNode = grid.getNodeAt(endX, endY)!
+  walls.forEach(([wallX, wallY]) => {
+    grid.getNodeAt(wallX, wallY)!.walkable = false
+  })
+  return {
+    grid,
+    startNode,
+    endNode,
+    finder: createAStarFinder(),
+  }
+}
+const params: ContextValueParams[] = [
+  {
+    start: [4, 3],
+    end: [4, 5],
+    walls: [
+      [3, 4],
+      [4, 4],
+      [5, 4],
+    ],
+  },
+  {
+    start: [6, 1],
+    end: [1, 8],
+    walls: [
+      [4, 0],
+      [4, 1],
+      [4, 2],
+      [3, 3],
+      [4, 3],
+      [5, 3],
+      [6, 3],
+      [7, 3],
+      [8, 3],
+    ],
+  },
+]
+
 export function Demo() {
   const contextDefaultValue = React.useMemo(() => {
-    const grid = createGrid(10, 10)
-    grid.getNodeAt(3, 4)!.walkable = false
-    grid.getNodeAt(4, 4)!.walkable = false
-    grid.getNodeAt(5, 4)!.walkable = false
-    return {
-      grid,
-      startNode: grid.getNodeAt(4, 3)!,
-      endNode: grid.getNodeAt(4, 5)!,
-      listener: createListener(),
-      finder: createAStarFinder(),
-    } as IGridContext
+    const index = params.length * Math.random()
+    return createContextValue(params[index >> 0])
   }, [])
   const [contextValue, setContextValue] =
     React.useState<IGridContext>(contextDefaultValue)
@@ -119,7 +152,6 @@ export function Demo() {
   const runStep = React.useCallback(() => {
     if (stepFn.current) {
       const isEnd = stepFn.current()
-      contextValue.listener.emit()
       if (isEnd) {
         stepFn.current = () => false
       }
@@ -157,7 +189,6 @@ export function Demo() {
       grid,
       startNode: grid.getNodeAt(startX, startY)!,
       endNode: grid.getNodeAt(endX, endY)!,
-      listener: createListener(),
       finder: createAStarFinder(),
     }
     stepFn.current = undefined
@@ -165,12 +196,27 @@ export function Demo() {
   }, [])
   return (
     <div className="w-[600px] mx-auto py-4">
+      <h1 className="text-4xl text-center pb-4">A* Demo</h1>
+      <p className="pb-4">
+        <span>A good article that explains this algorithm: </span>
+        <a
+          className="underline"
+          href="https://www.gamedev.net/reference/articles/article2003.asp"
+          target="_blank"
+        >
+          A* Pathfinding for Beginners
+        </a>
+      </p>
       <GridContext.Provider value={contextValue}>
         <GridView />
       </GridContext.Provider>
-      <div className="space-x-1">
-        <Button onClick={handleStartSearch}>Search Step</Button>
-        <Button onClick={handleRandomReset}>Random Reset</Button>
+      <div className="flex justify-between">
+        <div>
+          <Button onClick={handleStartSearch}>Search Step</Button>
+        </div>
+        <div>
+          <Button onClick={handleRandomReset}>Random Reset</Button>
+        </div>
       </div>
     </div>
   )
