@@ -46,6 +46,7 @@ function Block(props: { node: Node }) {
     $type = 'end'
     result = 'end'
   }
+  // result = `(${node.x}, ${node.y})`
   React.useEffect(() => {
     node?.onChange(() => {
       if (lastF.current !== node.f || node.selected) {
@@ -139,12 +140,30 @@ const params: ContextValueParams[] = [
       [8, 3],
     ],
   },
+  {
+    start: [6, 1],
+    end: [4, 6],
+    walls: [
+      [2, 4],
+      [2, 5],
+      [2, 6],
+      [3, 4],
+      [4, 4],
+      [5, 4],
+      [5, 5],
+      [5, 6],
+      [5, 7],
+      [3, 8],
+      [4, 8],
+      [5, 8],
+    ],
+  },
 ]
 
 export function Demo() {
+  const indexRef = React.useRef(2)
   const contextDefaultValue = React.useMemo(() => {
-    const index = params.length * Math.random()
-    return createContextValue(params[index >> 0])
+    return createContextValue(params[indexRef.current])
   }, [])
   const [contextValue, setContextValue] =
     React.useState<IGridContext>(contextDefaultValue)
@@ -194,6 +213,12 @@ export function Demo() {
     stepFn.current = undefined
     setContextValue(newContextValue)
   }, [])
+  const handleChangeCase = React.useCallback(() => {
+    let nextIndex = indexRef.current + 1
+    nextIndex = nextIndex < params.length ? nextIndex : 0
+    indexRef.current = nextIndex
+    setContextValue(createContextValue(params[nextIndex]))
+  }, [])
   return (
     <div className="w-[600px] mx-auto py-4">
       <h1 className="text-4xl text-center pb-4">A* Demo</h1>
@@ -214,7 +239,8 @@ export function Demo() {
         <div>
           <Button onClick={handleStartSearch}>Search Step</Button>
         </div>
-        <div>
+        <div className="space-x-1">
+          <Button onClick={handleChangeCase}>Change Case</Button>
           <Button onClick={handleRandomReset}>Random Reset</Button>
         </div>
       </div>

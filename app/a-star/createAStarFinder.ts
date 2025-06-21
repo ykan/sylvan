@@ -126,13 +126,13 @@ export function createGrid(colNum: number, rowNum: number) {
     },
     toString() {
       const rows = nodes.map((row) => {
-        const nums = row.map((item) => {
+        const cols = row.map((item) => {
           if (item.walkable) {
             return 0
           }
           return 1
         })
-        return nums.join(' ')
+        return cols.join(' ')
       })
       return rows.join('\n')
     },
