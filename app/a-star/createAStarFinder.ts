@@ -1,45 +1,36 @@
 'use client'
 import Heap from 'heap'
 
-export type Node = {
-  x: number
-  y: number
-  walkable: boolean
-  closed?: boolean
-  opened?: boolean
-  selected?: boolean
-  /**
-   * G = 从起点A，沿着产生的路径，移动到网格上指定方格的移动耗费。
-   */
-  g: number
-  /**
-   * H = 从网格上那个方格移动到终点B的预估移动耗费。
-   */
-  h: number
-  /**
-   * F = G + H
-   */
-  f: number
-  onChange: (fn: () => void) => void
-  parent?: Node
-}
+import type { SearchNode, GridState } from './type'
 
 function manhattan(dx: number, dy: number) {
   return dx + dy
 }
 
-export function createNode(x: number, y: number): Node {
+export function createNode(x: number, y: number): SearchNode {
   let _change = () => {}
   let _f = 0,
     _g = 0,
     _h = 0
   let _walkable = true,
-    _selected = false
+    _selected = false,
+    _type: SearchNode['type'] = 'default'
   return {
     x,
     y,
     onChange: (fn) => {
       _change = fn
+    },
+    reset() {
+      _f = 0
+      _g = 0
+      _h = 0
+      _selected = false
+      _walkable = true
+      _type = 'default'
+      this.parent = undefined
+      this.closed = undefined
+      _change()
     },
     set f(v: number) {
       _f = v
@@ -63,9 +54,13 @@ export function createNode(x: number, y: number): Node {
       return _h
     },
 
-    set walkable(v: boolean) {
-      _walkable = v
+    set type(v: SearchNode['type']) {
+      _type = v
+      _walkable = v !== 'wall'
       _change()
+    },
+    get type() {
+      return _type
     },
     get walkable() {
       return _walkable
@@ -81,30 +76,21 @@ export function createNode(x: number, y: number): Node {
 }
 
 export function createGrid(colNum: number, rowNum: number) {
-  const nodes: Node[][] = []
-  const buildNodes = () => {
-    for (let i = 0; i < colNum; i++) {
-      if (!nodes[i]) {
-        nodes[i] = []
-      }
-      for (let j = 0; j < rowNum; j++) {
-        const node = createNode(i, j)
-        nodes[i][j] = node
-      }
+  const nodes: SearchNode[][] = []
+  let _state: GridState | undefined
+
+  for (let i = 0; i < colNum; i++) {
+    if (!nodes[i]) {
+      nodes[i] = []
+    }
+    for (let j = 0; j < rowNum; j++) {
+      const node = createNode(i, j)
+      nodes[i][j] = node
     }
   }
 
   const instance = {
-    reset() {
-      buildNodes()
-    },
-    setWalkable(x: number, y: number, val = true) {
-      const node = instance.getNodeAt(x, y)
-      if (node) {
-        node.walkable = val
-      }
-    },
-    getNodeAt(x: number, y: number): Node | undefined {
+    getNodeAt(x: number, y: number): SearchNode | undefined {
       return nodes[x]?.[y]
     },
     getWalkableNodeAt(x: number, y: number) {
@@ -113,8 +99,11 @@ export function createGrid(colNum: number, rowNum: number) {
         return node
       }
     },
-    // 这里先只实现 4 方向
-    getNeighbors(node: Node) {
+    /**
+     * 获取目标节点周围的节点
+     * 当前只获取上下左右
+     */
+    getNeighbors(node: SearchNode) {
       const neighbors = [
         instance.getWalkableNodeAt(node.x - 1, node.y),
         instance.getWalkableNodeAt(node.x + 1, node.y),
@@ -122,22 +111,60 @@ export function createGrid(colNum: number, rowNum: number) {
         instance.getWalkableNodeAt(node.x, node.y - 1),
         instance.getWalkableNodeAt(node.x, node.y + 1),
       ]
-      return neighbors.filter((n) => !!n) as Node[]
+      return neighbors.filter((n) => !!n) as SearchNode[]
     },
-    toString() {
-      const rows = nodes.map((row) => {
-        const cols = row.map((item) => {
-          if (item.walkable) {
-            return 0
-          }
-          return 1
-        })
-        return cols.join(' ')
+    clearState() {
+      _state = undefined
+      for (let i = 0; i < colNum; i++) {
+        for (let j = 0; j < rowNum; j++) {
+          const node = nodes[i][j]
+          node.reset()
+        }
+      }
+    },
+    /**
+     * 设置网格状态
+     */
+    setState(state: GridState) {
+      instance.clearState()
+      _state = state
+      _state.walls.forEach(([wallX, wallY]) => {
+        const node = instance.getNodeAt(wallX, wallY)
+        if (node) {
+          node.type = 'wall'
+        }
       })
-      return rows.join('\n')
+      const startNode = instance.getStartNode()
+      if (startNode) {
+        startNode.type = 'start'
+      }
+      const endNode = instance.getEndNode()
+      if (endNode) {
+        endNode.type = 'end'
+      }
+    },
+    getStartNode() {
+      if (!_state?.start) {
+        return
+      }
+      const [startX, startY] = _state.start
+      return instance.getNodeAt(startX, startY)
+    },
+    getEndNode() {
+      if (!_state?.end) {
+        return
+      }
+      const [endX, endY] = _state.end
+      return instance.getNodeAt(endX, endY)
+    },
+    isEndNode(node: SearchNode) {
+      if (_state?.end && node) {
+        const [endX, endY] = _state.end
+        return endX === node.x && endY === node.y
+      }
+      return false
     },
   }
-  instance.reset()
 
   return instance
 }
@@ -153,10 +180,15 @@ export function createAStarFinder(opts: AStarFinderOptions = {}) {
   const innerWeight = opts.weight || 1
   const heuristic = opts.heuristic || manhattan
   return {
-    findPath(startNode: Node, endNode: Node, grid: Grid) {
-      const openList = new Heap<Node>((nodeA, nodeB) => {
+    findPath(grid: Grid) {
+      const openList = new Heap<SearchNode>((nodeA, nodeB) => {
         return nodeA.f - nodeB.f
       })
+      const startNode = grid.getStartNode()
+      const endNode = grid.getEndNode()
+      if (!startNode || !endNode) {
+        return
+      }
 
       // set the `g` and `f` value of the start node to be 0
       startNode.g = 0
@@ -174,20 +206,20 @@ export function createAStarFinder(opts: AStarFinderOptions = {}) {
         }
         node.closed = true
 
-        // if reached the end position, construct the path and return it
-        if (node === endNode) {
-          let n = node
-          while (n.parent) {
-            n.selected = true
-            n = n.parent
-          }
-          return true
-        }
-
-        // get neigbours of the current node
+        // get neighbors of the current node
         const neighbors = grid.getNeighbors(node)
         for (let i = 0, l = neighbors.length; i < l; i++) {
           const neighbor = neighbors[i]
+
+          // if reached the end position, construct the path and return it
+          if (grid.isEndNode(neighbor)) {
+            let n = node
+            while (n.parent) {
+              n.selected = true
+              n = n.parent
+            }
+            return true
+          }
 
           if (neighbor.closed) {
             continue
