@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { createAStarFinder, createGrid, Grid } from './createAStarFinder'
 
 import { Block } from './block'
-import { GridState } from './type'
+import { states } from './state'
 
 function GridView({ grid }: { grid: Grid }) {
   const blocks = []
@@ -23,53 +23,8 @@ function GridView({ grid }: { grid: Grid }) {
   )
 }
 
-const params: GridState[] = [
-  {
-    start: [4, 3],
-    end: [4, 5],
-    walls: [
-      [3, 4],
-      [4, 4],
-      [5, 4],
-    ],
-  },
-  {
-    start: [6, 1],
-    end: [1, 8],
-    walls: [
-      [4, 0],
-      [4, 1],
-      [4, 2],
-      [3, 3],
-      [4, 3],
-      [5, 3],
-      [6, 3],
-      [7, 3],
-      [8, 3],
-    ],
-  },
-  {
-    start: [6, 1],
-    end: [4, 6],
-    walls: [
-      [2, 4],
-      [2, 5],
-      [2, 6],
-      [3, 4],
-      [4, 4],
-      [5, 4],
-      [5, 5],
-      [5, 6],
-      [5, 7],
-      [3, 8],
-      [4, 8],
-      [5, 8],
-    ],
-  },
-]
-
 export function Demo() {
-  const indexRef = React.useRef(2)
+  const indexRef = React.useRef(states.length - 1)
   const stepFn = React.useRef<(() => boolean) | undefined>(undefined)
   const isEndRef = React.useRef(false)
   const finder = React.useMemo(() => {
@@ -80,7 +35,7 @@ export function Demo() {
   }, [])
   const handleManualStep = React.useCallback(() => {
     window.clearTimeout(autoTimer.current)
-    if (!stepFn.current) {
+    if (!stepFn.current || isEndRef.current) {
       return
     }
     const isEnd = stepFn.current?.()
@@ -121,9 +76,9 @@ export function Demo() {
   }, [])
   const handleChangeCase = React.useCallback(() => {
     let nextIndex = indexRef.current + 1
-    nextIndex = nextIndex < params.length ? nextIndex : 0
+    nextIndex = nextIndex < states.length ? nextIndex : 0
     indexRef.current = nextIndex
-    grid.setState(params[nextIndex])
+    grid.setState(states[nextIndex])
     stepFn.current = finder.findPath(grid)
     isEndRef.current = false
   }, [])

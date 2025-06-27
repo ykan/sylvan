@@ -1,9 +1,10 @@
 import { ease } from 'pixi-ease'
 import { Application, Point, Sprite, Text, TilingSprite, Assets } from 'pixi.js'
 
+import { sleep } from '@/lib/utils'
+
 import { createGrid } from './createGrid'
 import { createTreeMap } from './createTreeMap'
-import { waitTime } from './utils'
 import { gameOver } from './gameOver'
 
 import type { TreeType, Tree } from './types'
@@ -99,7 +100,7 @@ export function createMainScene(app: Application) {
           { rotation: -Math.PI / 12 },
           { repeat: true, duration: 50, ease: 'easeInOutQuad', reverse: true }
         )
-        await waitTime(500)
+        await sleep(500)
         ease.removeEase(view)
       },
       get type() {
@@ -232,13 +233,13 @@ export function createMainScene(app: Application) {
     for (const step of steps) {
       const [x, y] = step
       lastTree.moveTo(x, y)
-      await waitTime(moveSpeed)
+      await sleep(moveSpeed)
     }
     lastTree.endMove()
     const trees = [lastTree]
     lastTree = undefined
     await checkTrees(trees)
-    await waitTime(300)
+    await sleep(300)
 
     let nextLevel: 1 | 2 = 1
     let nextGenerateNum = 2
@@ -249,7 +250,7 @@ export function createMainScene(app: Application) {
       nextLevel = 2
     }
     const newTrees = randomAddTrees(nextLevel, nextGenerateNum)
-    await waitTime(600)
+    await sleep(600)
     if (newTrees?.length) {
       await checkTrees(newTrees)
     }

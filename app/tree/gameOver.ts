@@ -1,7 +1,7 @@
 import { ease } from 'pixi-ease'
 import { Application, Graphics, Color, Sprite, TextStyle, Text } from 'pixi.js'
 
-import { waitEaseComplete } from './utils'
+import { waitEaseComplete } from '@/lib/utils'
 
 export async function gameOver(app: Application, restart: () => void) {
   const ratio = window.devicePixelRatio || 1
