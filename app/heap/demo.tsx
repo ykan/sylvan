@@ -71,16 +71,7 @@ function createNode(
     moveTo(x: number, y: number) {
       return new Promise<void>((resolve) => {
         active()
-        const animation = ease.add(
-          view,
-          {
-            x,
-            y,
-          },
-          {
-            duration: 1000,
-          }
-        )
+        const animation = ease.add(view, { x, y }, { duration: 1000 })
         animation.once('complete', () => {
           ease.removeEase(view)
           reset()
@@ -217,8 +208,8 @@ async function initDemo(container: HTMLDivElement, app: Application) {
     },
   })
   app.stage.addChild(text)
-  text.x = (app.stage.width - text.width) / 2
-  text.y = app.stage.height + 30
+  text.x = (app.screen.width - text.width) / 2
+  text.y = app.screen.height - 50
 
   let isRunning = false
   app.stage.eventMode = 'static'
